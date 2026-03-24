@@ -22,8 +22,9 @@ var rootCmd = &cobra.Command{
 			color.NoColor = true
 		}
 	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	SilenceUsage:         true,
+	SilenceErrors:        true,
+	CompletionOptions:    cobra.CompletionOptions{DisableDefaultCmd: true},
 }
 
 func Execute() {
