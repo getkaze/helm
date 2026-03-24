@@ -37,6 +37,12 @@ helm save
 
 ## Install
 
+```bash
+curl -fsSL https://getkaze.dev/helm/install.sh | bash
+```
+
+This installs the latest release to `~/.local/bin/helm`.
+
 ### From source
 
 ```bash
@@ -216,6 +222,12 @@ make test                 # run tests with race detection
 | YAML | gopkg.in/yaml.v3 |
 | Color | fatih/color |
 | Build | Make + ldflags version injection |
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/image?repos=getkaze/helm&type=date&legend=top-left)](https://www.star-history.com/?repos=getkaze%2Fhelm&type=date&legend=top-left)
 
 ---
 
