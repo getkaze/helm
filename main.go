@@ -6,5 +6,6 @@ var version = "dev"
 
 func main() {
 	cmd.Version = version
+	cmd.Embedded = EmbeddedFiles
 	cmd.Execute()
 }

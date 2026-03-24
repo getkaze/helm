@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,6 +122,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Extract embedded framework files (agents, rules, schemas, CLAUDE.md, .claude/)
+	if err := extractEmbedded(); err != nil {
+		return fmt.Errorf("failed to extract framework files: %w", err)
+	}
+
 	// Create session
 	firstAgent := "scout"
 	if projectType == "brownfield" {
@@ -211,5 +217,37 @@ func isInteractive() bool {
 		return false
 	}
 	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+func extractEmbedded() error {
+	return fs.WalkDir(Embedded, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == "." {
+			return nil
+		}
+
+		if d.IsDir() {
+			return os.MkdirAll(path, 0o755)
+		}
+
+		// Skip if file already exists (don't overwrite user changes)
+		if _, err := os.Stat(path); err == nil {
+			return nil
+		}
+
+		data, err := Embedded.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read embedded file %s: %w", path, err)
+		}
+
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+
+		return os.WriteFile(path, data, 0o644)
+	})
 }
 

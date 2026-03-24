@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"embed"
 	"fmt"
 	"os"
 
@@ -10,6 +11,8 @@ import (
 )
 
 var Version = "dev"
+
+var Embedded embed.FS
 
 var noColor bool
 
