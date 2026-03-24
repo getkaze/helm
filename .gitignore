@@ -1,0 +1,6 @@
+bin/
+.helm/
+CLAUDE.local.md
+.vscode/
+.DS_Store
+coverage.out
