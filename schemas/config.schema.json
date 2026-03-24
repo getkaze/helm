@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Helm Config",
+  "description": "System configuration for Helm. Stored at helm.yaml in project root.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Helm version"
+    },
+    "installed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": ["greenfield", "brownfield"]
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en-US", "pt-BR"],
+      "default": "en-US"
+    }
+  },
+  "required": ["version", "project_type", "language"]
+}

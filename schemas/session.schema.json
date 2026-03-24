@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Helm Session",
+  "description": "Runtime session state for Helm pipeline. Stored at .helm/session.yaml",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["greenfield", "brownfield"] },
+        "state": { "type": "string", "enum": ["discover", "plan", "build", "validate", "deploy", "completed"] }
+      },
+      "required": ["name", "type", "state"]
+    },
+    "execution_profile": {
+      "type": "string",
+      "enum": ["explore", "guided", "autonomous"],
+      "default": "guided"
+    },
+    "current_agent": {
+      "type": "string",
+      "enum": ["scout", "survey", "research", "planning", "architect", "roadmap", "breakdown", "review", "build", "verify", "ship", ""]
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en-US", "pt-BR"],
+      "default": "en-US"
+    },
+    "workflow": {
+      "type": "string",
+      "enum": ["standard", "quick"],
+      "default": "standard"
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "skipped", "needs_revalidation"] },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "criteria_count": { "type": "integer", "minimum": 0 },
+          "completed_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["status"]
+      }
+    },
+    "deviations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "type": { "type": "string", "enum": ["scope_change", "approach_change", "skip_agent", "revisit_agent"] },
+          "from_agent": { "type": "string" },
+          "to_agent": { "type": "string" },
+          "reason": { "type": "string" },
+          "resolved": { "type": "boolean" }
+        },
+        "required": ["timestamp", "type", "reason"]
+      }
+    },
+    "initial_context": {
+      "type": "string",
+      "description": "User's initial project description, passed to first agent"
+    },
+    "tradeoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "decision": { "type": "string" },
+          "chosen": { "type": "string" },
+          "agent": { "type": "string", "description": "Agent that invoked the tradeoff" },
+          "artifact": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["decision", "chosen", "agent", "timestamp"]
+      }
+    }
+  },
+  "required": ["project", "current_agent", "language"]
+}
