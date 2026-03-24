@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: go test ./... -race -count=1
+
+  build:
+    needs: test
+    name: Build (${{ matrix.os }}/${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            goarch: amd64
+            goos: linux
+          - os: linux
+            arch: arm64
+            goarch: arm64
+            goos: linux
+          - os: darwin
+            arch: amd64
+            goarch: amd64
+            goos: darwin
+          - os: darwin
+            arch: arm64
+            goarch: arm64
+            goos: darwin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          VERSION="${{ github.ref_name }}"
+          go build \
+            -ldflags "-s -w -X main.version=${VERSION}" \
+            -o "bin/helm-${{ matrix.os }}-${{ matrix.arch }}" \
+            .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-${{ matrix.os }}-${{ matrix.arch }}
+          path: bin/helm-${{ matrix.os }}-${{ matrix.arch }}
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Build release body
+        run: |
+          VERSION="${{ github.ref_name }}"
+
+          cat > /tmp/release-body.md << FOOTER
+          ## Installation
+
+          \`\`\`bash
+          curl -fsSL https://getkaze.dev/helm/install.sh | bash
+          \`\`\`
+
+          ## Manual download
+
+          | Platform | Link |
+          |---|---|
+          | Linux amd64  | [helm-linux-amd64](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/helm-linux-amd64) |
+          | Linux arm64  | [helm-linux-arm64](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/helm-linux-arm64) |
+          | macOS amd64  | [helm-darwin-amd64](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/helm-darwin-amd64) |
+          | macOS arm64  | [helm-darwin-arm64](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/helm-darwin-arm64) |
+          FOOTER
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: /tmp/release-body.md
+          files: |
+            artifacts/helm-linux-amd64/helm-linux-amd64
+            artifacts/helm-linux-arm64/helm-linux-arm64
+            artifacts/helm-darwin-amd64/helm-darwin-amd64
+            artifacts/helm-darwin-arm64/helm-darwin-arm64
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
