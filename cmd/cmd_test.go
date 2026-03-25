@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/getkaze/helm/internal/display"
@@ -390,20 +391,53 @@ func TestDetectLanguage(t *testing.T) {
 func TestCheckGitignore(t *testing.T) {
 	setupTestDir(t)
 
-	// No .gitignore — should not panic
-	checkGitignore()
-
-	// .gitignore without .helm/ — should warn
-	os.WriteFile(".gitignore", []byte("node_modules/\n"), 0o644)
+	// No .gitignore — should warn about missing file
 	output := captureCmd(func() { checkGitignore() })
-	if output == "" {
-		t.Error("should warn about missing .helm/ in .gitignore")
+	if !strings.Contains(output, "No .gitignore found") {
+		t.Errorf("should warn about missing .gitignore, got: %q", output)
 	}
 
-	// .gitignore with .helm/ — should not warn
-	os.WriteFile(".gitignore", []byte(".helm/\n"), 0o644)
+	// .gitignore without helm entries — should add them
+	os.WriteFile(".gitignore", []byte("node_modules/\n"), 0o644)
+	output = captureCmd(func() { checkGitignore() })
+	if !strings.Contains(output, "Updated .gitignore") {
+		t.Errorf("should report updating .gitignore, got: %q", output)
+	}
+	data, _ := os.ReadFile(".gitignore")
+	content := string(data)
+	for _, entry := range helmGitignoreEntries {
+		if !strings.Contains(content, entry) {
+			t.Errorf(".gitignore should contain %q", entry)
+		}
+	}
+	if !strings.Contains(content, "# Helm") {
+		t.Error(".gitignore should contain Helm section header")
+	}
+	if !strings.Contains(content, "node_modules/") {
+		t.Error(".gitignore should preserve existing entries")
+	}
+
+	// .gitignore already has all entries — should not modify
 	output = captureCmd(func() { checkGitignore() })
 	if output != "" {
-		t.Error("should not warn when .helm/ is in .gitignore")
+		t.Errorf("should not output anything when all entries present, got: %q", output)
+	}
+
+	// .gitignore with partial entries — should add only missing ones
+	os.WriteFile(".gitignore", []byte(".helm/\nagents/\n"), 0o644)
+	captureCmd(func() { checkGitignore() })
+	data, _ = os.ReadFile(".gitignore")
+	content = string(data)
+	for _, entry := range helmGitignoreEntries {
+		if !strings.Contains(content, entry) {
+			t.Errorf(".gitignore should contain %q after partial update", entry)
+		}
+	}
+	// .helm/ and agents/ should not be duplicated
+	if strings.Count(content, ".helm/") != 1 {
+		t.Error(".helm/ should not be duplicated")
+	}
+	if strings.Count(content, "agents/") != 1 {
+		t.Error("agents/ should not be duplicated")
 	}
 }

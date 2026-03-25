@@ -201,14 +201,52 @@ func detectLanguage() string {
 	return "en-US"
 }
 
+// helmGitignoreEntries lists all paths created by helm init that should be gitignored.
+var helmGitignoreEntries = []string{
+	".helm/",
+	"agents/",
+	"rules/",
+	"schemas/",
+	".claude/",
+	"helm.yaml",
+	"CLAUDE.md",
+}
+
 func checkGitignore() {
 	data, err := os.ReadFile(".gitignore")
 	if err != nil {
+		display.Warning("No .gitignore found. Helm files may be committed to version control.")
 		return
 	}
-	if !strings.Contains(string(data), ".helm/") && !strings.Contains(string(data), ".helm") {
-		display.Warning(".helm/ is not in .gitignore. Runtime state may be committed.")
+
+	content := string(data)
+	var missing []string
+	for _, entry := range helmGitignoreEntries {
+		if !strings.Contains(content, entry) {
+			missing = append(missing, entry)
+		}
 	}
+
+	if len(missing) == 0 {
+		return
+	}
+
+	// Ensure we start on a new line
+	if len(content) > 0 && !strings.HasSuffix(content, "\n") {
+		content += "\n"
+	}
+
+	content += "\n# Helm\n"
+	for _, entry := range missing {
+		content += entry + "\n"
+	}
+
+	if err := os.WriteFile(".gitignore", []byte(content), 0o644); err != nil {
+		display.Warning(fmt.Sprintf("Failed to update .gitignore: %v", err))
+		return
+	}
+
+	fmt.Fprintf(display.Out, "  Updated .gitignore with Helm entries.\n")
 }
 
 func isInteractive() bool {
