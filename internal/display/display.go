@@ -27,7 +27,11 @@ func Dashboard(s *session.Session, cfg *config.Config) {
 	// Header
 	version := ""
 	if cfg != nil && cfg.Version != "" {
-		version = " v" + cfg.Version
+		if strings.HasPrefix(cfg.Version, "v") {
+			version = " " + cfg.Version
+		} else {
+			version = " v" + cfg.Version
+		}
 	}
 	fmt.Fprintf(w, "\n")
 	bold.Fprintf(w, "  Helm%s\n", version)
