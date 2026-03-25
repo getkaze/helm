@@ -41,7 +41,7 @@ helm save
 curl -fsSL https://getkaze.dev/helm/install.sh | bash
 ```
 
-This installs the latest release to `~/.local/bin/helm`.
+This installs the latest release to `~/.local/bin/helm`. To update later, run `helm update`.
 
 ### From source
 
@@ -80,6 +80,9 @@ helm resume --json                   # structured output
 helm save                            # validate + checkpoint
 helm save --message "before refactor"
 helm save --force                    # skip recent checkpoint warning
+
+# Update to latest version
+helm update
 
 # Other
 helm version
@@ -210,6 +213,7 @@ Binaries are output to `bin/`.
 
 ```bash
 make build
+bash install-dev.sh       # install dev build to ~/.local/bin
 make test                 # run tests with race detection
 ```
 
