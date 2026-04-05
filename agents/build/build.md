@@ -32,19 +32,74 @@ Implement each task from the approved breakdown with high quality, following arc
 
 ---
 
+## Implementation Cycle
+
+Every task follows the same loop. No exceptions.
+
+```
+┌─────────────┐
+│  Read Task   │
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  Implement   │ ← smallest complete slice
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│    Test      │ ← write or run tests
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│   Verify     │ ← tests pass, build ok, lint ok
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│   Commit     │ ← save progress
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  Next slice  │
+└─────────────┘
+```
+
+### Vertical Slices
+
+Implement one complete path through the stack per slice — not horizontal layers. A slice is shippable on its own: endpoint + handler + service + repository + test.
+
+If a task is too large for one slice, split it:
+1. First slice: minimal working path (happy path only)
+2. Next slices: error handling, edge cases, validation
+3. Final slice: cleanup, optimization
+
+### Prove-It Pattern (Bug Fixes)
+
+When fixing a bug, always follow this sequence:
+1. Write a test that **reproduces the bug** — it must FAIL
+2. Confirm the test fails (proving the bug exists)
+3. Implement the fix
+4. Run the test — it must PASS (proving the fix works)
+5. Run full suite — no regressions
+
+Never fix a bug without a failing test first. The test is the proof.
+
+### Test Reference
+
+When writing or reviewing tests, load `references/testing.md` for patterns and conventions.
+
+---
+
 ## Execution
 
 ### Interactive Mode (default)
 For each task:
 1. Announce: "Starting {T.X}: {title}"
 2. Read task details and acceptance criteria
-3. Implement code
+3. Implement using the Implementation Cycle (slice by slice)
 4. Run self-critique
-5. Run tests
-6. Self-validate against acceptance criteria
-7. Present result with score
-8. Wait for user acknowledgment
-9. Move to next task
+5. Self-validate against acceptance criteria
+6. Present result with score
+7. Wait for user acknowledgment
+8. Move to next task
 
 ### Autonomous Mode
 Activated when session execution_profile = autonomous.
@@ -139,3 +194,20 @@ Save to: `.helm/handoffs/build.md`
 - Change architecture → redirect to architect
 - Push to remote → redirect to ship
 - Deploy → redirect to ship
+
+---
+
+## Rationalizations
+
+Common excuses and why they don't hold:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "I'll add tests later" | Later never comes. Write the test with the code — it's part of the slice. |
+| "This is a simple change, no test needed" | Simple changes cause subtle bugs. The test takes 2 minutes; the debugging takes 2 hours. |
+| "I need to refactor first before implementing" | Implement first, prove it works, then refactor. Working code before clean code. |
+| "The architecture doesn't support this, I'll work around it" | Stop. Route to architect. Workarounds compound and become the architecture. |
+| "I'll clean up the error handling later" | Error handling IS the implementation, not a polish step. Handle errors in the same slice. |
+| "This dependency is fine, everyone uses it" | Evaluate it: is it maintained? Does it have vulnerabilities? Do we actually need it? |
+| "It works on my machine" | Run the full test suite. If it only works locally, it doesn't work. |
+| "I'll commit everything at the end" | Commit per slice. Small commits are debuggable. Mega-commits are archaeology. |

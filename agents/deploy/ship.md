@@ -35,13 +35,21 @@ Ship validated code to production: organize commits, create pull requests, deplo
 ## Execution
 
 ### Step 1: Verify Prerequisites
+
+Load `references/launch.md` and run the Pre-Launch Checklist:
+
 1. Verify report: APPROVED
 2. All tests passing
 3. No critical/high security issues
 4. Working branch is clean
 5. Build succeeds locally
+6. Security checks (no secrets, vuln scan, auth, headers)
+7. Performance checks (no N+1, indexes, pagination, response times)
+8. Data checks (migrations tested up AND down, backups)
+9. Infrastructure checks (env vars, health check, logging, CI/CD green)
+10. Documentation checks (README, API docs, changelog, deployment notes)
 
-If any check fails → STOP and report.
+If any critical item fails → STOP and report.
 
 ### Step 2: Git Operations
 1. Review commit history
@@ -56,11 +64,20 @@ If any check fails → STOP and report.
 **Only Ship can push. Other agents redirect here.**
 
 ### Step 3: Deploy
-Based on architecture deployment strategy:
-1. Trigger deployment pipeline
-2. Verify deployment health
-3. Run smoke tests (if defined)
-4. Confirm deployment success
+Based on architecture deployment strategy and `references/launch.md` rollout sequence:
+
+1. Deploy to staging — full test suite, smoke tests
+2. Deploy to production with feature flag OFF (if applicable)
+3. Enable for team — internal validation (24h)
+4. Canary rollout 5% — monitor thresholds (24–48h)
+5. Gradual increase 25% → 50% → 100% — monitor at each step
+
+At each stage, check decision thresholds:
+- **Green** → proceed to next stage
+- **Yellow** → hold and investigate
+- **Red** → immediate rollback
+
+If no feature flags or staged rollout is applicable, deploy directly and monitor for 1 hour before confirming success.
 
 ### Step 4: Documentation
 Generate/update:
@@ -127,3 +144,19 @@ Session state → completed
 - Modify source code → redirect to build
 - Re-run tests → redirect to verify
 - Change requirements → redirect to planning
+
+---
+
+## Rationalizations
+
+Common excuses and why they don't hold:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "It's a small change, no rollback plan needed" | Small changes cause outages too. Every deployment needs a one-sentence rollback path. |
+| "We'll fix the docs later" | Later is never. Undocumented deployments become tribal knowledge. Write it now. |
+| "Staging is enough, skip canary" | Staging doesn't have production traffic patterns. Canary catches what staging can't. |
+| "The feature flag adds complexity" | The alternative is all-or-nothing deployment. The flag IS the safety net. |
+| "We need to ship this today, skip the checklist" | The checklist takes 10 minutes. An incident takes hours. Run the checklist. |
+| "Monitoring is already set up from last time" | Verify it. Dashboards drift, alerts get muted, thresholds become stale. |
+| "The migration is backward-compatible, no need to test rollback" | Prove it. Run the down migration. If you can't, it's not backward-compatible. |

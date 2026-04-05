@@ -1,8 +1,10 @@
 <div align="center">
 
-  <img src="logo-wheel.svg" alt="helm" width="48" height="48"/>
-
-  # helm
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="banner-light.png">
+    <source media="(prefers-color-scheme: light)" srcset="banner-dark.png">
+    <img src="banner-dark.png" alt="Helm" width="200">
+  </picture>
 
   **AI agent orchestration for backend development.**
 
@@ -159,7 +161,7 @@ survey → research → planning → architect → roadmap → breakdown → rev
 | **verify** | Quality | Test, SAST, code review (95% gate) |
 | **ship** | Deploy | Git operations, PR, deployment |
 
-Agent definitions live in `agents/`. Governance rules in `rules/governance.md`.
+Agent definitions live in `agents/`. Governance rules in `rules/governance.md`. Quality checklists in `references/`.
 
 ---
 
@@ -183,6 +185,7 @@ Agent definitions live in `agents/`. Governance rules in `rules/governance.md`.
   checkpoints/            # Session snapshots (max 5, FIFO rotation)
 
 helm.yaml                 # Project config (committed)
+references/               # Quality checklists (security, testing, performance, launch)
 ```
 
 ### Checkpoints

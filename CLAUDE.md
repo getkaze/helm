@@ -7,6 +7,7 @@ Type `/helm` to start. The orchestrator reads session state and routes to the co
 
 ## Structure
 - `agents/` — 12 agent definitions (11 specialized + orchestrator)
+- `references/` — 4 quality checklists (security, testing, performance, launch)
 - `rules/governance.md` — 10 governance rules
 - `schemas/` — JSON schemas for session and config validation
 - `.helm/` — Runtime state (not committed)

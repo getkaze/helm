@@ -45,6 +45,9 @@ Criteria:
 - No skipped tests without documented reason
 
 ### Phase 2: SAST (Static Security Analysis)
+
+Load `references/security.md` for full checklist and language-specific patterns.
+
 Scan for:
 1. SQL Injection patterns
 2. Command Injection
@@ -59,12 +62,36 @@ Severity: CRITICAL | HIGH | MEDIUM | LOW
 - MEDIUM → document, recommend fix
 - LOW → document only
 
-### Phase 3: Code Review
-1. Architecture adherence (patterns match design)
-2. Error handling completeness
-3. Naming conventions consistency
-4. Code duplication check
-5. Dependency usage (no unnecessary deps)
+### Phase 3: Code Review (5 Axes)
+
+Review every change through these five lenses:
+
+**Correctness**
+- Does it match the spec/acceptance criteria?
+- Are edge cases handled (nil, empty, overflow, concurrent access)?
+- Do tests actually test the right behavior (not implementation details)?
+
+**Readability**
+- Are names clear and self-documenting?
+- Is control flow straightforward (no deep nesting, no clever tricks)?
+- Can a new team member understand this without extra context?
+
+**Architecture**
+- Does it follow existing patterns in the codebase?
+- Are module boundaries clean (no circular deps, no leaking internals)?
+- Is the abstraction level appropriate (not over-engineered, not under-structured)?
+
+**Security**
+- Is input validated at system boundaries?
+- Are queries parameterized?
+- Are secrets and credentials handled safely?
+- Load `references/security.md` for full checklist.
+
+**Performance**
+- Any N+1 queries or unbounded loops?
+- Are list endpoints paginated?
+- Is there unnecessary work in hot paths?
+- Load `references/performance.md` for full checklist.
 
 ### Phase 4: Acceptance Criteria Validation
 For each task in the breakdown:
@@ -140,3 +167,19 @@ Save to: `.helm/handoffs/verify.md`
 - Modify source code → redirect to build
 - Change requirements → redirect to planning
 - Deploy → redirect to ship
+
+---
+
+## Rationalizations
+
+Common excuses and why they don't hold:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "The coverage is close enough" | Close enough means untested paths. Untested paths are where bugs hide. Hit the threshold. |
+| "This vulnerability is low risk" | Low risk × many instances = high risk. Document all, fix medium+, block critical/high. |
+| "It works in the happy path" | The happy path is 20% of production traffic. Test the other 80%. |
+| "The tests are slow, so I skipped some" | Slow tests are a build problem, not a reason to skip verification. Flag it, don't ignore it. |
+| "This is just a refactor, no new tests needed" | Refactors without tests are renames-and-pray. Run the existing suite at minimum. |
+| "The dependency has a vulnerability but we don't use that function" | Transitive usage is hard to audit. Update the dependency — it's cheaper than the risk. |
+| "Code review is subjective" | The 5 axes are concrete. Correctness and security are binary, not subjective. |
