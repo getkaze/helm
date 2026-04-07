@@ -6,9 +6,31 @@ set -euo pipefail
 BINARY_NAME="helm"
 RELEASES_BASE="https://github.com/getkaze/helm/releases"
 
+# Resolve real user home when running under sudo.
+if [ -n "${SUDO_USER:-}" ]; then
+  REAL_HOME="$(eval echo "~${SUDO_USER}")"
+else
+  REAL_HOME="$HOME"
+fi
+
 # Install directory: ~/.local/bin (user-writable).
-INSTALL_DIR="${HOME}/.local/bin"
-mkdir -p "$INSTALL_DIR"
+INSTALL_DIR="${REAL_HOME}/.local/bin"
+mkdir -p "$INSTALL_DIR" 2>/dev/null || {
+  echo "error: could not create ${INSTALL_DIR}" >&2
+  echo "" >&2
+  echo "Try running without sudo:" >&2
+  echo "  curl -fsSL https://getkaze.dev/helm/install.sh | bash" >&2
+  echo "" >&2
+  echo "Or create the directory first:" >&2
+  echo "  mkdir -p ${INSTALL_DIR}" >&2
+  echo "  curl -fsSL https://getkaze.dev/helm/install.sh | bash" >&2
+  exit 1
+}
+
+# Ensure the directory is owned by the real user (not root).
+if [ -n "${SUDO_USER:-}" ]; then
+  chown -R "${SUDO_USER}" "${REAL_HOME}/.local"
+fi
 
 # ── color helpers ──────────────────────────────────────────────────────────────
 bold=$(tput bold 2>/dev/null || true)
