@@ -210,6 +210,7 @@ var helmGitignoreEntries = []string{
 	".claude/",
 	"helm.yaml",
 	"CLAUDE.md",
+	"references/",
 }
 
 func checkGitignore() {
